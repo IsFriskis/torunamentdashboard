@@ -1,10 +1,11 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const tournament = await prisma.tournament.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         organizer: { select: { id: true, name: true, email: true, image: true } },
         teams: { orderBy: { points: "desc" } },
@@ -19,8 +20,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const updateData: any = {};
     if (body.name) updateData.name = body.name;
@@ -35,7 +37,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (body.maxParticipants !== undefined) updateData.maxParticipants = body.maxParticipants;
     
     const tournament = await prisma.tournament.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: { organizer: { select: { id: true, name: true, email: true } } },
     });
@@ -45,9 +47,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await prisma.tournament.delete({ where: { id: params.id } });
+    const { id } = await params;
+    await prisma.tournament.delete({ where: { id } });
     return NextResponse.json({ message: "Tournament deleted successfully" });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete tournament" }, { status: 500 });

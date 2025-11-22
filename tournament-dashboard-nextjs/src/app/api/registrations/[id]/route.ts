@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const registration = await prisma.tournamentRegistration.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         tournament: {
           select: {
@@ -33,15 +34,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const updateData: any = {};
     
     if (body.status) updateData.status = body.status;
     
     const registration = await prisma.tournamentRegistration.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         tournament: {
@@ -66,9 +68,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await prisma.tournamentRegistration.delete({ where: { id: params.id } });
+    const { id } = await params;
+    await prisma.tournamentRegistration.delete({ where: { id } });
     return NextResponse.json({ message: "Registration deleted successfully" });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete registration" }, { status: 500 });

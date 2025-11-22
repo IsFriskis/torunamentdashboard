@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         organizedTournaments: {
           select: {
@@ -50,8 +51,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const updateData: any = {};
     
@@ -64,7 +66,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (body.role) updateData.role = body.role;
     
     const user = await prisma.user.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       select: {
         id: true,
@@ -83,9 +85,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await prisma.user.delete({ where: { id: params.id } });
+    const { id } = await params;
+    await prisma.user.delete({ where: { id } });
     return NextResponse.json({ message: "User deleted successfully" });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
