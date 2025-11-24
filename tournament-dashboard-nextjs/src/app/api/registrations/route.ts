@@ -1,6 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+/**
+ * @swagger
+ * /api/registrations:
+ *   get:
+ *     tags:
+ *       - Registrations
+ *     summary: Get all registrations
+ *     description: Retrieve a list of all tournament registrations with user and tournament details
+ *     responses:
+ *       200:
+ *         description: A list of registrations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Registration'
+ *       500:
+ *         description: Server error
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

@@ -1,7 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET all tournaments
+/**
+ * @swagger
+ * /api/tournaments:
+ *   get:
+ *     tags:
+ *       - Tournaments
+ *     summary: Get all tournaments
+ *     description: Retrieve a list of all tournaments with optional filters
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [UPCOMING, ONGOING, COMPLETED, CANCELLED]
+ *         description: Filter by tournament status
+ *       - in: query
+ *         name: organizerId
+ *         schema:
+ *           type: string
+ *         description: Filter by organizer ID
+ *     responses:
+ *       200:
+ *         description: A list of tournaments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Tournament'
+ *       500:
+ *         description: Server error
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -44,7 +75,64 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST create tournament
+/**
+ * @swagger
+ * /api/tournaments:
+ *   post:
+ *     tags:
+ *       - Tournaments
+ *     summary: Create a new tournament
+ *     description: Create a new tournament with the provided details
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - location
+ *               - startDate
+ *               - startTime
+ *               - endDate
+ *               - endTime
+ *               - organizerId
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *               startTime:
+ *                 type: string
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *               endTime:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [UPCOMING, ONGOING, COMPLETED, CANCELLED]
+ *               entryFee:
+ *                 type: integer
+ *               maxParticipants:
+ *                 type: integer
+ *               organizerId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Tournament created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Tournament'
+ *       500:
+ *         description: Server error
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

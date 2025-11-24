@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 
 interface Stats {
   tournaments: number;
@@ -11,28 +12,32 @@ interface Stats {
   registrations: number;
 }
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
 export default function DashboardPage() {
+  const { data: session, status } = useSession();
   const [stats, setStats] = useState<Stats>({ tournaments: 0, teams: 0, matches: 0, registrations: 0 });
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [devUser, setDevUser] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const userStr = localStorage.getItem('currentUser');
-    if (!userStr) {
+    // Check for dev login first
+    const devUserStr = localStorage.getItem('currentUser');
+    if (devUserStr) {
+      const user = JSON.parse(devUserStr);
+      setDevUser(user);
+      fetchStats();
+      return;
+    }
+
+    // Otherwise check NextAuth session
+    if (status === 'unauthenticated') {
       router.push('/login');
       return;
     }
-    setCurrentUser(JSON.parse(userStr));
-    fetchStats();
-  }, [router]);
+    if (status === 'authenticated') {
+      fetchStats();
+    }
+  }, [status, router]);
 
   const fetchStats = async () => {
     try {
@@ -55,8 +60,14 @@ export default function DashboardPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('currentUser');
-    router.push('/login');
+    // Check if dev login
+    const devUserStr = localStorage.getItem('currentUser');
+    if (devUserStr) {
+      localStorage.removeItem('currentUser');
+      router.push('/login');
+    } else {
+      signOut({ callbackUrl: '/login' });
+    }
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -72,6 +83,20 @@ export default function DashboardPage() {
     }
   };
 
+  if (status === 'loading' && !devUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Use dev user if available, otherwise use session user
+  const currentUser = devUser || session?.user;
+
   if (!currentUser) {
     return null;
   }
@@ -86,10 +111,10 @@ export default function DashboardPage() {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
               <div className="flex items-center gap-3 mt-2">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Logged in as: <span className="font-medium text-gray-900 dark:text-white">{currentUser.name}</span>
+                  Logged in as: <span className="font-medium text-gray-900 dark:text-white">{currentUser.name || currentUser.email}</span>
                 </p>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(currentUser.role)}`}>
-                  {currentUser.role}
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(currentUser.role || 'USER')}`}>
+                  {currentUser.role || 'USER'}
                 </span>
               </div>
             </div>
